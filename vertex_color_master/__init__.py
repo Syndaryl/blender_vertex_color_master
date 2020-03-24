@@ -79,10 +79,6 @@ classes = (
 addon_keymaps = []
 
 def register():
-    # fix issue with default brush name changing between 2.80 > 2.81
-    if bpy.app.version >= (2, 81, 0):
-        default_brush_name = 'Add'
-
     # add operators
     for c in classes:
         bpy.utils.register_class(c)
@@ -91,20 +87,6 @@ def register():
     bpy.types.Scene.vertex_color_master_settings = bpy.props.PointerProperty(
         type=vcm_main.VertexColorMasterProperties)
 
-    # register shortcuts
-    wm = bpy.context.window_manager
-    if wm.keyconfigs.addon:
-        km = wm.keyconfigs.addon.keymaps.new(name='Vertex Paint')
-        # pie menu
-        kmi = km.keymap_items.new('wm.call_menu_pie', 'V', 'PRESS')
-        kmi.properties.name = "VERTEXCOLORMASTER_MT_PieMain"
-        kmi.active = True
-        addon_keymaps.append((km, kmi))
-        # override 'x' to use VCM flip brush colors
-        kmi = km.keymap_items.new('vertexcolormaster.brush_colors_flip', 'X', 'PRESS')
-        kmi.active = True
-        addon_keymaps.append((km, kmi))
-
 def unregister():
     # remove operators
     for c in reversed(classes):
@@ -112,17 +94,6 @@ def unregister():
 
     # unregister properties
     del bpy.types.Scene.vertex_color_master_settings
-
-    # unregister shortcuts
-    wm = bpy.context.window_manager
-    if wm.keyconfigs.addon:
-        for km in addon_keymaps:
-            for kmi in km.keymap_items:
-                km.keymap_items.remove(kmi)
-
-            wm.keyconfigs.addon.keymaps.remove(km)
-
-    del addon_keymaps[:]
 
 # allows running addon from text editor
 if __name__ == '__main__':

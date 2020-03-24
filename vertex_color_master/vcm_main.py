@@ -21,7 +21,6 @@ import bpy
 from bpy.props import *
 from mathutils import Color
 from .vcm_globals import *
-from .vcm_helpers import rgb_to_luminosity
 
 # VERTEXCOLORMASTER_Properties
 class VertexColorMasterProperties(bpy.types.PropertyGroup):

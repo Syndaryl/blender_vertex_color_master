@@ -267,7 +267,7 @@ def draw_src_dst_operations(context, layout, obj, settings):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.operator('vertexcolormaster.rgb_to_grayscale',
-            text="Src RGB to luminosity")
+            text="Src RGB to grayscale")
         row = col.row(align=True)
         row.operator('vertexcolormaster.copy_channel', text="Src ({0}) to Dst RGB".format(
             settings.src_channel_id)).all_channels = True

@@ -68,23 +68,21 @@ def get_isolated_channel_ids(vcol):
     return None
 
 
-def rgb_to_luminosity(color):
-    # Y = 0.299 R + 0.587 G + 0.114 B
-    return color[0] * 0.299 + color[1] * 0.587 + color[2] * 0.114
+def rgb_to_grayscale(color, weights):
+    return color[0] * weights[0] + color[1] * weights[1] + color[2] * weights[2]
 
-
-def convert_rgb_to_luminosity(mesh, src_vcol, dst_vcol, dst_channel_idx, dst_all_channels=False):
+def convert_rgb_to_grayscale(mesh, weights, src_vcol, dst_vcol, dst_channel_idx, dst_all_channels=False):
     if dst_all_channels:
         for loop_index, loop in enumerate(mesh.loops):
             c = src_vcol.data[loop_index].color
-            luminosity = rgb_to_luminosity(c)
+            luminosity = rgb_to_grayscale(c, weights)
             c[0] = luminosity # assigning this way will preserve alpha
             c[1] = luminosity
             c[2] = luminosity
             dst_vcol.data[loop_index].color = c
     else:
         for loop_index, loop in enumerate(mesh.loops):
-            luminosity = rgb_to_luminosity(src_vcol.data[loop_index].color)
+            luminosity = rgb_to_grayscale(src_vcol.data[loop_index].color, weights)
             dst_vcol.data[loop_index].color[dst_channel_idx] = luminosity
 
 
@@ -277,6 +275,8 @@ def color_to_weights(obj, src_vcol, src_channel_idx, dst_vgroup_idx):
 
     mesh.update()
 
+def distance_to_color(mesh):
+    mesh.update()
 
 # no channel checking. Designed to more efficiently apply a color to mesh
 def quick_fill_selected(mesh, vcol, color):
