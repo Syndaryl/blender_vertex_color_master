@@ -64,6 +64,7 @@ classes = (
     vcm_ops.VERTEXCOLORMASTER_OT_ColorToUVs,
     vcm_ops.VERTEXCOLORMASTER_OT_NormalsToColor,
     vcm_ops.VERTEXCOLORMASTER_OT_ColorToNormals,
+    vcm_ops.VERTEXCOLORMASTER_OT_PositionsToColor,
     vcm_ops.VERTEXCOLORMASTER_OT_IsolateChannel,
     vcm_ops.VERTEXCOLORMASTER_OT_ApplyIsolatedChannel,
     vcm_ops.VERTEXCOLORMASTER_OT_RandomizeMeshIslandColors,

@@ -651,14 +651,14 @@ class VERTEXCOLORMASTER_OT_ColorToUVs(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
         u_idx = 0
         v_idx = 1
-        color_to_uvs(mesh, vi['src_vcol'], vi['dst_uv'], u_idx, v_idx)
+        color_to_uvs(mesh, vi.src_vcol, vi['dst_uv'], u_idx, v_idx)
 
         return {'FINISHED'}
 
@@ -677,14 +677,14 @@ class VERTEXCOLORMASTER_OT_UVsToColor(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
         u_idx = 0
         v_idx = 1
-        uvs_to_color(mesh, vi['src_uv'], vi['dst_vcol'], u_idx, v_idx)
+        uvs_to_color(mesh, vi.src_uv, vi.dst_vcol, u_idx, v_idx)
 
         return {'FINISHED'}
 
@@ -703,13 +703,13 @@ class VERTEXCOLORMASTER_OT_NormalsToColor(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=False, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         obj = context.active_object
         normals = get_custom_normals(obj)
-        normals_to_color(obj.data, normals, vi['dst_vcol'])
+        normals_to_color(obj.data, normals, vi.dst_vcol)
 
         return {'FINISHED'}
 
@@ -728,12 +728,77 @@ class VERTEXCOLORMASTER_OT_ColorToNormals(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=False)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
-        color_to_normals(mesh, vi['src_vcol'])
+        color_to_normals(mesh, vi.src_vcol)
+
+        return {'FINISHED'}
+
+
+class VERTEXCOLORMASTER_OT_PositionsToColor(bpy.types.Operator):
+    """Copy Positions to vertex color channel"""
+    bl_idname = 'vertexcolormaster.positions_to_color'
+    bl_label = 'VCM Positions to Color'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    active_channels: EnumProperty(
+        name="Active Channels",
+        options={'ENUM_FLAG'},
+        items=channel_items,
+        description="Which channels to enable.",
+        default={'R', 'G', 'B'},
+    )
+
+    normalize: BoolProperty(
+        default=True,
+    )
+
+    max_distance: FloatProperty(
+        default=1,
+        min=0
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        if not self.isolate_mode:
+            col = layout.column()
+            row = col.row(align=True)
+            row.prop(self, 'active_channels')
+
+        layout.prop(self, 'normalize', text="Normalize Distance")
+        if not self.normalize:
+            layout.prop(self, 'max_distance', text="Max Distance")
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return bpy.context.object.mode == 'VERTEX_PAINT' and obj is not None and obj.type == 'MESH'
+
+    def invoke(self, context, event):
+        self.layer_info = get_layer_info(context)
+        
+        settings = context.scene.vertex_color_master_settings        
+
+        mesh = context.active_object.data
+        vcol = mesh.vertex_colors.active if mesh.vertex_colors else mesh.vertex_colors.new()
+        self.isolate_mode = True if get_isolated_channel_ids(vcol) is not None else False
+        self.active_channels = settings.active_channels if not self.isolate_mode else {'R', 'G', 'B'}
+        
+        return self.execute(context)
+
+    def execute(self, context):
+        vi = get_validated_input(context, get_src=False, get_dst=True, layer_info=self.layer_info)
+
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
+            return {'FINISHED'}
+
+        obj = context.active_object
+        distance_to_color(obj.data, -1.0 if self.normalize else self.max_distance, vi.dst_vcol, self.active_channels)
 
         return {'FINISHED'}
 
@@ -752,12 +817,12 @@ class VERTEXCOLORMASTER_OT_ColorToWeights(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         obj = context.active_object
-        color_to_weights(obj, vi['src_vcol'], vi['src_channel_idx'], vi['dst_vgroup_idx'])
+        color_to_weights(obj, vi.src_vcol, vi.src_channel_idx, vi.dst_vgroup_idx)
 
         return {'FINISHED'}
 
@@ -776,13 +841,12 @@ class VERTEXCOLORMASTER_OT_WeightsToColor(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
-        weights_to_color(mesh, vi['src_vgroup_idx'],
-                         vi['dst_vcol'], vi['dst_channel_idx'])
+        weights_to_color(mesh, vi.src_vgroup_idx, vi.dst_vcol, vi.dst_channel_idx)
 
         return {'FINISHED'}
 
@@ -822,17 +886,22 @@ class VERTEXCOLORMASTER_OT_RgbToGrayscale(bpy.types.Operator):
         obj = context.active_object
         return bpy.context.object.mode == 'VERTEX_PAINT' and obj is not None and obj.type == 'MESH'
 
-    def execute(self, context):
-        vi = get_validated_input(context, get_src=True, get_dst=True)
+    def invoke(self, context, event):
+        self.layer_info = get_layer_info(context)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        return self.execute(context)
+
+    def execute(self, context):
+        vi = get_validated_input(context, get_src=True, get_dst=True, layer_info=self.layer_info)
+
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
         weights = [self.r_channel_weight, self.g_channel_weight, self.b_channel_weight]
         convert_rgb_to_grayscale(
-            mesh, weights, vi['src_vcol'], vi['dst_vcol'], vi['dst_channel_idx'], self.all_channels)
+            mesh, weights, vi.src_vcol, vi.dst_vcol, vi.dst_channel_idx, self.all_channels)
 
         return {'FINISHED'}
 
@@ -863,13 +932,13 @@ class VERTEXCOLORMASTER_OT_CopyChannel(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
-        copy_channel(mesh, vi['src_vcol'], vi['dst_vcol'], vi['src_channel_idx'],
-                     vi['dst_channel_idx'], self.swap_channels, self.all_channels)
+        copy_channel(mesh, vi.src_vcol, vi.dst_vcol, vi.src_channel_idx,
+                     vi.dst_channel_idx, self.swap_channels, self.all_channels)
 
         return {'FINISHED'}
 
@@ -907,14 +976,14 @@ class VERTEXCOLORMASTER_OT_BlendChannels(bpy.types.Operator):
     def execute(self, context):
         vi = get_validated_input(context, get_src=True, get_dst=True)
 
-        if vi['error'] is not None:
-            self.report({'ERROR'}, vi['error'])
+        if vi.hasError():
+            self.report({'ERROR'}, vi.error)
             return {'FINISHED'}
 
         mesh = context.active_object.data
         result_channel_idx = channel_id_to_idx(self.result_channel_id)
-        blend_channels(mesh, vi['src_vcol'], vi['dst_vcol'], vi['src_channel_idx'],
-                       vi['dst_channel_idx'], result_channel_idx, self.blend_mode)
+        blend_channels(mesh, vi.src_vcol, vi.dst_vcol, vi.src_channel_idx,
+                       vi.dst_channel_idx, result_channel_idx, self.blend_mode)
 
         return {'FINISHED'}
 
@@ -946,6 +1015,12 @@ class VERTEXCOLORMASTER_OT_Fill(bpy.types.Operator):
         description="Color to fill vertex color data with."
     )
 
+    fill_random: BoolProperty(
+        name="Fill with Random Value",
+        description="Use a random fill value",
+        default=False
+    )
+
     @classmethod
     def poll(cls, context):
         obj = context.active_object
@@ -958,6 +1033,9 @@ class VERTEXCOLORMASTER_OT_Fill(bpy.types.Operator):
         vcol = mesh.vertex_colors.active if mesh.vertex_colors else mesh.vertex_colors.new()
 
         isolate_mode = get_isolated_channel_ids(vcol) is not None
+
+        if self.fill_random:
+            self.value = random.random()
 
         if self.fill_with_color or isolate_mode:
             active_channels = ['R', 'G', 'B']
@@ -973,7 +1051,11 @@ class VERTEXCOLORMASTER_OT_Fill(bpy.types.Operator):
         layout = self.layout
 
         row = layout.row()
-        row.prop(self, 'value', slider=True)
+        row.prop(self, 'fill_random')
+        if not self.fill_random:
+            row = layout.row()
+            row.prop(self, 'value', slider=True)
+
         row = layout.row()
         row.prop(self, 'fill_with_color')
         if self.fill_with_color:

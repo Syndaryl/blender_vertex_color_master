@@ -39,7 +39,6 @@ class VERTEXCOLORMASTER_PT_MainPanel(bpy.types.Panel):
     # bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
-        layout = self.layout
         obj = context.active_object
         settings = context.scene.vertex_color_master_settings
 
@@ -230,8 +229,8 @@ def draw_src_dst_operations(context, layout, obj, settings):
     row.label(text="Data Transfer")
 
     layer_info = get_layer_info(context)
-    src_type = layer_info[0]
-    dst_type = layer_info[2]
+    src_type = layer_info.src_type
+    dst_type = layer_info.dst_type
 
     lcol_percentage = 0.8
     row = layout.row()
@@ -291,6 +290,9 @@ def draw_src_dst_operations(context, layout, obj, settings):
     elif src_type == type_vcol and dst_type == type_normal:
         row = layout.row(align=True)
         row.operator('vertexcolormaster.color_to_normals', text="Color to Normals")
+    elif src_type == type_position and dst_type == type_vcol:
+        row = layout.row(align=True)
+        row.operator('vertexcolormaster.positions_to_color', text="Position to Color")
     else:
         # unsupported: vgroup <-> vgroup, uv <-> uv, vgroup <-> uv
         row = layout.row(align=True)

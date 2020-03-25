@@ -127,19 +127,22 @@ class VertexColorMasterProperties(bpy.types.PropertyGroup):
         obj = context.active_object
         mesh = obj.data
 
-        items = [] if mesh.vertex_colors is None else [
-            ("{0} {1}".format(type_vcol, vcol.name), 
-             vcol.name, "") for vcol in mesh.vertex_colors]
-        ext = [] if obj.vertex_groups is None else [
-            ("{0} {1}".format(type_vgroup, group.name),
-             "W: " + group.name, "") for group in obj.vertex_groups]
-        items.extend(ext)
-        ext = [] if mesh.uv_layers is None else [
-            ("{0} {1}".format(type_uv, uv.name),
-             "UV: " + uv.name, "") for uv in mesh.uv_layers]
-        items.extend(ext)
-        ext = [("{0} {1}".format(type_normal, "Normals"), "Normals", "")]
-        items.extend(ext)
+        items = []
+        
+        if mesh.vertex_colors is not None:
+            for vcol in mesh.vertex_colors:
+                items.append(("{0} {1}".format(type_vcol, vcol.name), vcol.name, ""))
+        
+        if obj.vertex_groups is not None:
+            for group in obj.vertex_groups:
+                items.append(("{0} {1}".format(type_vgroup, group.name), "W: " + group.name, ""))
+                
+        if mesh.uv_layers is not None:
+            for uv in mesh.uv_layers:
+                items.append(("{0} {1}".format(type_uv, uv.name), "UV: " + uv.name, ""))
+                
+        items.append(("{0} {1}".format(type_normal, "Normals"), "Normals", ""))
+        items.append(("{0} {1}".format(type_position, "Positions"), "Positions", ""))
 
         return items
 

@@ -275,7 +275,40 @@ def color_to_weights(obj, src_vcol, src_channel_idx, dst_vgroup_idx):
 
     mesh.update()
 
-def distance_to_color(mesh):
+def distance_to_color(mesh, maxDistance, dst_vcol, active_channels):
+    normalize = False
+    if maxDistance < 0.0:
+        normalize = True
+        maxDistance = 0.0
+
+    distances = [0.0] * len(mesh.vertices)
+
+    for loop in mesh.loops:
+        vi = loop.vertex_index
+        vertexPos = mesh.vertices[vi].co
+        distances[vi] = vertexPos.length
+        if normalize:
+            maxDistance = max(maxDistance, distances[vi])
+
+    maxDistance = max(maxDistance, 0.0000001)
+
+    for i in range(0, len(distances)):
+        distances[i] = min(1.0, distances[i] / maxDistance)
+
+    for loop_index, loop in enumerate(mesh.loops):
+        distance = distances[loop.vertex_index]
+        
+        c = dst_vcol.data[loop_index].color
+        if red_id in active_channels:
+            c[0] = distance
+        if green_id in active_channels:
+            c[1] = distance
+        if blue_id in active_channels:
+            c[2] = distance
+        if alpha_id in active_channels:
+            c[3] = distance
+        dst_vcol.data[loop_index].color = c
+
     mesh.update()
 
 # no channel checking. Designed to more efficiently apply a color to mesh
@@ -539,6 +572,13 @@ def set_island_colors_per_channel(mesh, rgba_mask, merge_similar, vmin, vmax):
     bpy.ops.object.mode_set(mode='VERTEX_PAINT', toggle=False)
 
 
+class LayerInfo():
+    def __init__(self, src_type, src_id, dst_type, dst_id):
+        self.src_type = src_type
+        self.src_id = src_id
+        self.dst_type = dst_type
+        self.dst_id = dst_id
+
 def get_layer_info(context):
     settings = context.scene.vertex_color_master_settings
 
@@ -551,77 +591,85 @@ def get_layer_info(context):
     dst_type = s[:s.find(d)]
     dst_id = s[s.find(d) + 1:]
 
-    return [src_type, src_id, dst_type, dst_id]
+    return LayerInfo(src_type, src_id, dst_type, dst_id)
 
+class ValidatedInput():
+    error = None
 
-def get_validated_input(context, get_src, get_dst):
+    def isValid(self):
+        return self.error is None
+
+    def hasError(self):
+        return self.error is not None
+
+def get_validated_input(context, get_src, get_dst, layer_info = None):
     settings = context.scene.vertex_color_master_settings
     obj = context.active_object
     mesh = obj.data
 
-    rv = {}
-    message = None
+    if (layer_info is None):
+        layer_info = get_layer_info(context)
 
-    layer_info = get_layer_info(context)
-    src_type = layer_info[0]
-    src_id = layer_info[1]
-    dst_type = layer_info[2]
-    dst_id = layer_info[3]
+    src_type = layer_info.src_type
+    src_id = layer_info.src_id
+    dst_type = layer_info.dst_type
+    dst_id = layer_info.dst_id
+
+    result = ValidatedInput()
 
     # are these conditions actually possible?
-    if message is None:
+    if result.isValid():
         if (src_type == type_vcol or dst_type == type_vcol) and mesh.vertex_colors is None:
-            message = "Object has no vertex colors."
+            result.error = "Object has no vertex colors."
         if (src_type == type_vgroup or dst_type == type_vgroup) and obj.vertex_groups is None:
-            message = "Object has no vertex groups."
+            result.error = "Object has no vertex groups."
         if (src_type == type_uv or dst_type == type_uv) and mesh.uv_layers is None:
-            message = "Object has no uv layers."
+            result.error = "Object has no uv layers."
 
     # validate src
-    if get_src and message is None:
+    if get_src and result.isValid():
         if src_type == type_vcol:
             if src_id in mesh.vertex_colors:
-                rv['src_vcol'] = mesh.vertex_colors[src_id]
-                rv['src_channel_idx'] = channel_id_to_idx(settings.src_channel_id)
+                result.src_vcol = mesh.vertex_colors[src_id]
+                result.src_channel_idx = channel_id_to_idx(settings.src_channel_id)
             else:
-                message = "Src color layer is not valid."
+                result.error = "Src color layer is not valid."
         elif src_type == type_uv:
             if src_id in mesh.uv_layers:
-                rv['src_uv'] = mesh.uv_layers[src_id]
+                result.src_uv = mesh.uv_layers[src_id]
             else:
-                message = "Src UV layer is not valid."            
+                result.error = "Src UV layer is not valid."            
         else:
             src_vgroup_idx = -1
             for group in obj.vertex_groups:
                 if group.name == src_id:
                     src_vgroup_idx = group.index
-                    rv['src_vgroup_idx'] = src_vgroup_idx
+                    result.src_vgroup_idx = src_vgroup_idx
                     break
             if src_vgroup_idx < 0:
-                message = "Src vertex group is not valid."
+                result.error = "Src vertex group is not valid."
 
     # validate dst
-    if get_dst and message is None:
+    if get_dst and result.isValid():
         if dst_type == type_vcol:
             if dst_id in mesh.vertex_colors:
-                rv['dst_vcol'] = mesh.vertex_colors[dst_id]
-                rv['dst_channel_idx'] = channel_id_to_idx(settings.dst_channel_id)
+                result.dst_vcol = mesh.vertex_colors[dst_id]
+                result.dst_channel_idx = channel_id_to_idx(settings.dst_channel_id)
             else:
-                message = "Dst color layer is not valid."
+                result.error = "Dst color layer is not valid."
         elif dst_type == type_uv:
             if dst_id in mesh.uv_layers:
-                rv['dst_uv'] = mesh.uv_layers[dst_id]
+                result.dst_uv = mesh.uv_layers[dst_id]
             else:
-                message = "Dst UV layer is not valid." 
+                result.error = "Dst UV layer is not valid." 
         else:
             dst_vgroup_idx = -1
             for group in obj.vertex_groups:
                 if group.name == dst_id:
                     dst_vgroup_idx = group.index
-                    rv['dst_vgroup_idx'] = dst_vgroup_idx
+                    result.dst_vgroup_idx = dst_vgroup_idx
                     break
             if dst_vgroup_idx < 0:
-                message = "Dst vertex group is not valid."
+                result.error = "Dst vertex group is not valid."
 
-    rv['error'] = message
-    return rv
+    return result

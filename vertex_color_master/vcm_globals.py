@@ -28,7 +28,8 @@ type_vcol = 'VCOL'
 type_vgroup = 'VGROUP'
 type_uv = 'UV'
 type_normal = 'NORMALS'
-valid_layer_types = [type_vcol, type_vgroup, type_uv, type_normal]
+type_position = 'POS'
+valid_layer_types = [type_vcol, type_vgroup, type_uv, type_normal, type_position]
 
 channel_items = ((red_id, "R", ""),
                  (green_id, "G", ""),
