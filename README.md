@@ -1,6 +1,7 @@
 Forked from https://github.com/andyp123/blender_vertex_color_master
 
 To bake shading into vertex colors, select "Shading" as the source and your vertex colors as the destination.
+The primary brush color is used as the ambient light color.
 
 # Vertex Color Master for Blender
 
