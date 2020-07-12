@@ -1,3 +1,7 @@
+Forked from https://github.com/andyp123/blender_vertex_color_master
+
+To bake shading into vertex colors, select "Shading" as the source and your vertex colors as the destination.
+
 # Vertex Color Master for Blender
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=S3GTZ2J938U6Y&lc=GB&item_name=Andrew%20Palmer&currency_code=GBP&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
