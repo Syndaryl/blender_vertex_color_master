@@ -141,6 +141,8 @@ class VertexColorMasterProperties(bpy.types.PropertyGroup):
         items.extend(ext)
         ext = [("{0} {1}".format(type_normal, "Normals"), "Normals", "")]
         items.extend(ext)
+        ext = [("{0} {1}".format(type_shading, "Shading"), "Shading", "")]
+        items.extend(ext)
 
         return items
 

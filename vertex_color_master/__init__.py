@@ -64,6 +64,7 @@ classes = (
     vcm_ops.VERTEXCOLORMASTER_OT_ColorToUVs,
     vcm_ops.VERTEXCOLORMASTER_OT_NormalsToColor,
     vcm_ops.VERTEXCOLORMASTER_OT_ColorToNormals,
+    vcm_ops.VERTEXCOLORMASTER_OT_ShadingToColor,
     vcm_ops.VERTEXCOLORMASTER_OT_IsolateChannel,
     vcm_ops.VERTEXCOLORMASTER_OT_ApplyIsolatedChannel,
     vcm_ops.VERTEXCOLORMASTER_OT_RandomizeMeshIslandColors,
@@ -96,14 +97,14 @@ def register():
     if wm.keyconfigs.addon:
         km = wm.keyconfigs.addon.keymaps.new(name='Vertex Paint')
         # pie menu
-        kmi = km.keymap_items.new('wm.call_menu_pie', 'V', 'PRESS')
-        kmi.properties.name = "VERTEXCOLORMASTER_MT_PieMain"
-        kmi.active = True
-        addon_keymaps.append((km, kmi))
+        #kmi = km.keymap_items.new('wm.call_menu_pie', 'V', 'PRESS')
+        #kmi.properties.name = "VERTEXCOLORMASTER_MT_PieMain"
+        #kmi.active = True
+        #addon_keymaps.append((km, kmi))
         # override 'x' to use VCM flip brush colors
-        kmi = km.keymap_items.new('vertexcolormaster.brush_colors_flip', 'X', 'PRESS')
-        kmi.active = True
-        addon_keymaps.append((km, kmi))
+        #kmi = km.keymap_items.new('vertexcolormaster.brush_colors_flip', 'X', 'PRESS')
+        #kmi.active = True
+        #addon_keymaps.append((km, kmi))
 
 def unregister():
     # remove operators

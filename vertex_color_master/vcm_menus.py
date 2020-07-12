@@ -291,6 +291,9 @@ def draw_src_dst_operations(context, layout, obj, settings):
     elif src_type == type_vcol and dst_type == type_normal:
         row = layout.row(align=True)
         row.operator('vertexcolormaster.color_to_normals', text="Color to Normals")
+    elif src_type == type_shading and dst_type == type_vcol:
+        row = layout.row(align=True)
+        row.operator('vertexcolormaster.shading_to_color', text="Shading to Color")
     else:
         # unsupported: vgroup <-> vgroup, uv <-> uv, vgroup <-> uv
         row = layout.row(align=True)

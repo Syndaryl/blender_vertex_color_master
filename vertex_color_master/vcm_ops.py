@@ -737,6 +737,34 @@ class VERTEXCOLORMASTER_OT_ColorToNormals(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class VERTEXCOLORMASTER_OT_ShadingToColor(bpy.types.Operator):
+    """Copy smooth shading to vertex color channel"""
+    bl_idname = 'vertexcolormaster.shading_to_color'
+    bl_label = 'VCM Shading to Colors'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return bpy.context.object.mode == 'VERTEX_PAINT' and obj is not None and obj.type == 'MESH'
+
+    def execute(self, context):
+        vi = get_validated_input(context, get_src=False, get_dst=True)
+
+        if vi['error'] is not None:
+            self.report({'ERROR'}, vi['error'])
+            return {'FINISHED'}
+
+        obj = context.active_object
+        positions = [vert.co + obj.location for vert in obj.data.vertices]
+        normals = get_custom_normals(obj)
+        mesh = context.active_object.data
+        lights = get_lights(context)
+        brush = context.tool_settings.vertex_paint.brush
+        shading_to_color(mesh, obj.matrix_world, lights, positions, normals, brush.color, vi['dst_vcol'])
+
+        return {'FINISHED'}
+
 
 class VERTEXCOLORMASTER_OT_ColorToWeights(bpy.types.Operator):
     """Copy vertex color channel to vertex group weights"""

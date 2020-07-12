@@ -196,6 +196,21 @@ def get_custom_normals(obj):
 
     return normals
 
+def get_lights(context):
+    light_ids = context.blend_data.lights
+    user_map = context.blend_data.user_map()
+    lights = [item for sublist in [user_map[id] for id in light_ids] for item in sublist]
+
+    return lights
+
+def get_smooth_shading(obj):
+    # Calculate the brightness for each vertex given the scene lights
+    # You probably don't have to do this but I couldn't find anything better in the Blender API
+    normals = [loop.normal for loop in [obj.data.calc_normals_split(), obj][1].data.loops]
+    brightnesses = [1 for loop in [obj.data.calc_normals_split(), obj][1].data.loops]
+
+    return brightnesses
+
 
 def normals_to_color(mesh, normals, dst_vcol):
     # copy normal xyz to color rgb
@@ -229,6 +244,43 @@ def color_to_normals(mesh, src_vcol):
 
     mesh.normals_split_custom_set(clnors)   
     mesh.update()  
+
+
+def shading_to_color(mesh, obj_matrix, lights, positions, normals, ambient, dst_vcol):
+    # copy 1.0 to color rgb
+    for loop_index, loop in enumerate(mesh.loops):
+        cur_brightness = 0.0
+        c = dst_vcol.data[loop_index].color
+        n = normals[loop_index]
+        n.rotate(obj_matrix)
+        p = positions[loop.vertex_index]
+        p.rotate(obj_matrix)
+        diffuse = Vector()
+        for light_index, light in enumerate(lights):
+            light_data = light.data
+            offset = p - light.location
+            distance = offset.magnitude
+            offset.normalize()  
+            falloff = light_data.distance
+            falloff_scale = 1.0
+            light_dir = Vector((0.0, 0.0, 1.0))
+
+            if light_data.type == 'SUN':
+                light_dir = Vector((0.0, 0.0, -1.0))
+                light_dir.rotate(light.matrix_world)
+            elif light_data.type == 'POINT':
+                light_dir = offset
+
+            dot = light_dir.dot(-n)
+            if (dot > 0):
+                diffuse += Vector((1.0, 1.0, 1.0)) * dot * falloff_scale * light_data.energy
+            #cur_brightness = n[0]
+        # remap to values that can be displayed
+        dst_vcol.data[loop_index].color[0] = diffuse[0] + ambient[0]
+        dst_vcol.data[loop_index].color[1] = diffuse[1] + ambient[1]
+        dst_vcol.data[loop_index].color[2] = diffuse[2] + ambient[2]
+
+    mesh.update()
 
 
 def weights_to_color(mesh, src_vgroup_idx, dst_vcol, dst_channel_idx, all_channels=False):
