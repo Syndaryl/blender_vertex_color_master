@@ -3,7 +3,7 @@ Forked from https://github.com/andyp123/blender_vertex_color_master
 To bake shading into vertex colors, select "Shading" as the source and your vertex colors as the destination.
 The primary brush color is used as the ambient light color.
 
-Install by downloading a zip from the Code button or cloning this repo, the instructions below are for the original version of the plugin.
+Install by downloading a zip from the Code button or cloning this repo and copy the vertex_color_master folder in the zip into your addons folder, the instructions below are for the original version of the plugin.
 
 # Vertex Color Master for Blender
 
